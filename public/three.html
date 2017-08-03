@@ -12,13 +12,44 @@
 		<script src="js/loader/OBJLoader.js"></script>
 
 		<script>
-		  var mouseX , mouseY;
+			var three = (function () {
+				// 创建场景
+				var scene = new THREE.Scene();//创建场景对象
+				scene.background = new THREE.Color( 0xaaaaaa );//接收一个THREE.Color对象
+				// scene.far = true; //雾
+				// 创建相机
+				var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 10000);
+				// 创建渲染器
+				var renderer = new THREE.WebGLRenderer();
+				renderer = setSize(window.innerWidth,window.innerHeight);
+				document.body.appendChild(renderer.domElement)//向HTML文档中添加一个canvas元素 renderr.domElement
+				renderer.shadowMapEnabled = true; //开启渲染器阴影
+				//创建Controls Orbit
+				var initOrbit = function () {
+					var controls = new THREE.OrbitControls( camera, renderer.domElement)
+					//	如果使用animate方法时，将此函数删除
+					//controls.addEventListener( 'change', render );
+					//	使动画循环使用时阻尼或自转 意思是否有惯性
+					controls.enableDamping = true;
+					//	动态阻尼系数 就是鼠标拖拽旋转灵敏度
+					controls.dampingFactor = 0.1;
+					//	是否启用旋转
+					// controls.enableRotate = true;
+					//	是否可以缩放
+					// controls.enableZoom = true;
+					//	是否自动旋转
+					controls.autoRotate = true;
+					//	设置相机距离原点的最远距离
+					controls.minDistance  = 1600;
+					//	设置相机距离原点的最远距离
+					controls.maxDistance  = 2000;
+					//	是否开启右键拖拽
+					// controls.enablePan = true;
+					return controls;
+				}
 
-			//create scecne
-			var scene = new THREE.Scene();
-      scene.background = new THREE.Color( 0xaaaaaa );
+			})()
 			// var color = new THREE.Color();
-			// scene.far = true;
 //Hexadecimal color (recommended)
 // var color = new THREE.Color( 0xff0000 );
 			//create camera
@@ -60,21 +91,21 @@
 	}
 
 			// light
-			function addLights() {
-			hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+			function addLights () {
+				hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
 
-			dirLight = new THREE.DirectionalLight(0xffffff, .4);
-			dirLight.position.set(200, 200, 200);
-			dirLight.castShadow = true;
-			// dirLight.shadowDarkness = .1;
+				dirLight = new THREE.DirectionalLight(0xffffff, .4);
+				dirLight.position.set(200, 200, 200);
+				dirLight.castShadow = true;
+				// dirLight.shadowDarkness = .1;
 
-			backLight = new THREE.DirectionalLight(0xffffff, .4);
-			backLight.position.set(-200, 200, 50);
-			// backLight.shadowDarkness = .1;
-			backLight.castShadow = true;
-			scene.add(backLight);
-			scene.add(hemiLight);
-			scene.add(dirLight);
+				backLight = new THREE.DirectionalLight(0xffffff, .4);
+				backLight.position.set(-200, 200, 50);
+				// backLight.shadowDarkness = .1;
+				backLight.castShadow = true;
+				scene.add(backLight);
+				scene.add(hemiLight);
+				scene.add(dirLight);
 			}
       // scene.add( new THREE.PointLightHelper( backLight ) );
       // scene.add( new THREE.PointLightHelper( hemiLight ) );
