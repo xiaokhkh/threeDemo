@@ -7,21 +7,24 @@
 		</style>
 	</head>
 	<body>
-		<script src="js/three.js"></script>
+		<script src="dist/three_min.js"></script>
 		<script src="js/controls/OrbitControls.js"></script>
 		<script src="js/loader/OBJLoader.js"></script>
 
 		<script>
 			var three = (function () {
+				var controls;
+
 				// 创建场景
 				var scene = new THREE.Scene();//创建场景对象
 				scene.background = new THREE.Color( 0xaaaaaa );//接收一个THREE.Color对象
 				// scene.far = true; //雾
 				// 创建相机
 				var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 10000);
+				camera.position.z = -1;
 				// 创建渲染器
 				var renderer = new THREE.WebGLRenderer();
-				renderer = setSize(window.innerWidth,window.innerHeight);
+				renderer.setSize(window.innerWidth,window.innerHeight);
 				document.body.appendChild(renderer.domElement)//向HTML文档中添加一个canvas元素 renderr.domElement
 				renderer.shadowMapEnabled = true; //开启渲染器阴影
 				//创建Controls Orbit
@@ -47,74 +50,94 @@
 					// controls.enablePan = true;
 					return controls;
 				}
+				// light
+			var addLights	= function () {
+					hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
 
-			})()
-			// var color = new THREE.Color();
-//Hexadecimal color (recommended)
-// var color = new THREE.Color( 0xff0000 );
-			//create camera
-			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 10000 );
-			camera.position.z = -1;
+					dirLight = new THREE.DirectionalLight(0xffffff, .4);
+					dirLight.position.set(200, 200, 200);
+					dirLight.castShadow = true;
 
-			//crate render and to body add a canvas element
-			var renderer = new THREE.WebGLRenderer();
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			// renderer.setSize( 180,180)
-			document.body.appendChild( renderer.domElement );
-			renderer.shadowMapEnabled = true;
-			//create controls and pass in camera paramater
-			//用户交互插件 鼠标左键按住旋转，右键按住平移，滚轮缩放
-	var controls;
-	function initControls() {
-			controls = new THREE.OrbitControls( camera, renderer.domElement );
-			// controls.maxPolarAngle = Math.PI * 0.5;
-			// controls.minDistance = 1000;
-			// controls.maxDistance = 7500;
-			// 如果使用animate方法时，将此函数删除
-			//controls.addEventListener( 'change', render );
-			// 使动画循环使用时阻尼或自转 意思是否有惯性
-			controls.enableDamping = true;
-			//动态阻尼系数 就是鼠标拖拽旋转灵敏度
-			controls.dampingFactor = 0.1;
-			//
-			// controls.enableRotate = true;
-			//是否可以缩放
-			// controls.enableZoom = true;
-			//是否自动旋转
-			controls.autoRotate = true;
-			//设置相机距离原点的最远距离
-			controls.minDistance  = 1600;
-			//设置相机距离原点的最远距离
-			controls.maxDistance  = 2000;
-			//是否开启右键拖拽
-			// controls.enablePan = true;
-	}
+					backLight = new THREE.DirectionalLight(0xffffff, .4);
+					backLight.position.set(-200, 200, 50);
+					backLight.castShadow = true;
 
-			// light
-			function addLights () {
-				hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+					scene.add(backLight);
+					scene.add(hemiLight);
+					scene.add(dirLight);
+					// 在灯的位置出现选区
+					// scene.add( new THREE.PointLightHelper( backLight ) );
+		      // scene.add( new THREE.PointLightHelper( hemiLight ) );
+		      // scene.add( new THREE.PointLightHelper( dirLight ) );
+				}
+			var loadObj = function () {
+				var manager = new THREE.LoadingManager();
+				var objLoader = new THREE.OBJLoader(manager);
+				var filePath = './models/chair.obj'
+				// ajax 异步方式 这里会有一个坑
+				objLoader.load( filePath, function(obj){//接收obj函数
+					var obj = obj;
 
-				dirLight = new THREE.DirectionalLight(0xffffff, .4);
-				dirLight.position.set(200, 200, 200);
-				dirLight.castShadow = true;
-				// dirLight.shadowDarkness = .1;
+					// obj 坐标
+					obj.position.y = 0;
+			    obj.position.z = 0;
+					obj.position.x = 0;
 
-				backLight = new THREE.DirectionalLight(0xffffff, .4);
-				backLight.position.set(-200, 200, 50);
-				// backLight.shadowDarkness = .1;
-				backLight.castShadow = true;
-				scene.add(backLight);
-				scene.add(hemiLight);
-				scene.add(dirLight);
+					// obj 角度
+					// obj.rotation.z = 1;
+					// obj.rotation.y = 300;
+
+					// obj 缩放
+					obj.scale.x = 1;
+					obj.scale.y = 1;
+					obj.scale.z = 1;
+
+					// 中心点
+					// obj.geometry.computeVertexNormals();
+					// obj.geometry.center();
+
+					//产生阴影
+					obj.castShadow = true;
+					obj.receiveShadow = true;
+
+					//	模型选区
+					//  helper = new THREE.BoundingBoxHelper(banana, 0xff0000);
+					//  helper.update();
+					//  scene.add(helper);
+					obj.traverse(function (child) {
+						if (child instanceof THREE.Mesh) {
+							// child.geometry.computeVertexNormals();
+							child.geometry.center();
+							child.castShadow = true;
+							child.receiveShadow = true;
+						}
+					})
+					scene.add(obj);
+				})
 			}
-      // scene.add( new THREE.PointLightHelper( backLight ) );
-      // scene.add( new THREE.PointLightHelper( hemiLight ) );
-      // scene.add( new THREE.PointLightHelper( dirLight ) );
+			controls = initOrbit();
+			var animate = function () {
+				// camera.lookAt(new THREE.Vector3(0, 0, 0));
+				controls.update();
+				renderer.render(scene, camera);
+				requestAnimationFrame(animate);
+			};
+			addLights();
+			loadObj();
+			animate();
 
-			// create obj model and be add in scene
+
 			window.addEventListener('mousedown',function(){
 				controls.autoRotate = false;
 			},false)
+			})()
+			//create camera
+
+
+
+
+			// create obj model and be add in scene
+
 
       //
 			// var ground = new THREE.Mesh(
@@ -133,92 +156,7 @@
 			// scene.add(ground);
 
 			// 加载obj文件
-			var loadOBJ = function() {
-			  //Manager from ThreeJs to track a loader and its status
-			  var manager = new THREE.LoadingManager();
-			  //Loader for Obj from Three.js
-			  var loader = new THREE.OBJLoader(manager);
 
-			  //Launch loading of the obj file, addBananaInScene is the callback when it's ready
-			  loader.load('./models/chair.obj', function(object) {
-			    banana = object;
-			    //Move the banana in the scene
-			    banana.position.y = 0;
-			    banana.position.z = 0;
-					banana.position.x = 0;
-					//rotation
-					// banana.rotation.z = 1
-					// banana.rotation.y = 300
-					banana.scale.x = 1;
-					banana.scale.y = 1;
-					banana.scale.z = 1;
-
-					// banana.children[1].position.y = 1.6;
-					// banana.children[1].position.z = 0.8;
-
-					// console.log(banana.scale.x)
-					// banana.scale = 100;
-			    //Go through all children of the loaded object and search for a Mesh
-			    object.traverse(function(child) {
-			      //This allow us to check if the children is an instance of the Mesh constructor
-			      if (child instanceof THREE.Mesh) {
-			        // child.material.color = new THREE.Color(0X00FF00);
-			        //Sometimes there are some vertex normals missing in the .obj files, ThreeJs will compute them
-			        // child.geometry.computeVertexNormals();
-							child.geometry.center();
-							child.castShadow = true;
-
-			      }
-			    });
-					//  helper = new THREE.BoundingBoxHelper(banana, 0xff0000);
-					//  helper.update();
-					//  scene.add(helper);
-
-							//  banana.children[0].geometry.computeBoundingBox();
-              //  banana.rotation.x = THREE.Math.degToRad( 90 );
-              //  console.log(- ( banana.children[0].geometry.boundingBox.max.x + banana.children[0].geometry.boundingBox.min.x ) / 2);
-              //  console.log(- ( banana.children[0].geometry.boundingBox.max.y + banana.children[0].geometry.boundingBox.min.y ) / 2);
-              //  console.log(- ( banana.children[0].geometry.boundingBox.max.z + banana.children[0].geometry.boundingBox.min.z ) / 2);
-              //  console.log( banana.children[0].geometry.center() );
-					banana.castShadow = true;
-					banana.receiveShadow = true;
-			    scene.add(banana);
-			    // render();
-			    // console.log(banana)
-			  });
-			};
-			loadOBJ();
-			// camera.position.z = 1;
-			// camera.position.y = ;
-			addLights();
-
-			// camera.rotationy = 179.68;
-			// camera.rotationx = -6.60;
-			// camera.rotationz = -180;
-			initControls();
-			// window.addEventListener('mousedown', function mousedown(e) {
-			// 		var start = {};
-			// 		start.x = e.clientX;
-			// 		start.y = e.clientY;
-			// 	window.addEventListener('mousemove', function mousemove (e) {
-			// 		banana.rotation.x = e.clientX - start.x/1000
-			// 		banana.rotation.y = e.clientY - start.y/1000
-			// 		console.log(banana.rotation)
-			// 	})
-			// 	window.addEventListener('mouseup', function (e) {
-			// 		window.removeEventListener('mousemove', mousemove)
-			// 		// window.removeEventListener('mousemomve', mousemove)
-			//
-			//
-			// 	})
-			// })
-			var animate = function () {
-				// camera.lookAt(new THREE.Vector3(0, 0, 0));
-				controls.update();
-				renderer.render(scene, camera);
-				requestAnimationFrame(animate);
-			};
-			animate();
 		</script>
 	</body>
 </html>
