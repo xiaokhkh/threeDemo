@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>My first three.js app</title>
+		<title>threeDemo</title>
 		<style>
 			body { margin: 0; }
 			canvas { width: 100%; height: 100% }
@@ -13,7 +13,9 @@
 
 		<script>
 			var three = (function () {
-				var controls;
+				var controls,raycaster,mouse,intersects;
+
+				mouse = new THREE.Vector2();
 
 				// 创建场景
 				var scene = new THREE.Scene();//创建场景对象
@@ -77,29 +79,25 @@
 				// ajax 异步方式 这里会有一个坑
 				objLoader.load( filePath, function(obj){//接收obj函数
 					var obj = obj;
+					// console.log(obj);
 
 					// obj 坐标
 					obj.position.y = 0;
 			    obj.position.z = 0;
 					obj.position.x = 0;
-
 					// obj 角度
 					// obj.rotation.z = 1;
 					// obj.rotation.y = 300;
-
 					// obj 缩放
 					obj.scale.x = 1;
 					obj.scale.y = 1;
 					obj.scale.z = 1;
-
 					// 中心点
 					// obj.geometry.computeVertexNormals();
 					// obj.geometry.center();
-
 					//产生阴影
 					obj.castShadow = true;
 					obj.receiveShadow = true;
-
 					//	模型选区
 					//  helper = new THREE.BoundingBoxHelper(banana, 0xff0000);
 					//  helper.update();
@@ -113,33 +111,10 @@
 						}
 					})
 					scene.add(obj);
+					animate();
+
 				})
 			}
-			controls = initOrbit();
-			var animate = function () {
-				// camera.lookAt(new THREE.Vector3(0, 0, 0));
-				controls.update();
-				renderer.render(scene, camera);
-				requestAnimationFrame(animate);
-			};
-			addLights();
-			loadObj();
-			animate();
-
-
-			window.addEventListener('mousedown',function(){
-				controls.autoRotate = false;
-			},false)
-			})()
-			//create camera
-
-
-
-
-			// create obj model and be add in scene
-
-
-      //
 			// var ground = new THREE.Mesh(
 			//
 			//     new THREE.CubeGeometry(100, 1, 100),
@@ -154,9 +129,54 @@
 			// ground.receiveShadow = true;
 			// // console.log(ground)
 			// scene.add(ground);
+			var choiceObj = function (){
+				raycaster = new THREE.Raycaster();
+				var touchstart  = function (e) {
+				var e = e.touched[0];
+				onmousemove(e);
+				}
+				var onmousemove = function (e) {
+					mouse.x = e.clientX/renderer.domElement.clientWidth * 2 - 1;
+					mouse.y = - e.clientY/renderer.domElement.clientHeight * 2 + 1;
+					// console.log(mouse);
+				}
+				document.addEventListener('touchstart', touchstart,false)
+				document.addEventListener('mousemove', onmousemove,false)
+			}
+			controls = initOrbit();
+			addLights();
+			choiceObj();
+			loadObj();
+			// console.log(scene.children[3])
+			var animate = function () {
+				// camera.lookAt(new THREE.Vector3(0, 0, 0));
+				// console.log()
+				// var intersects = raycaster.intersectObjects( scene.children );
+				// console.log(intersects)
 
-			// 加载obj文件
+				raycaster.setFromCamera( mouse, camera );
+				intersects = raycaster.intersectObjects( scene.children[3].children );
+				for ( var i = 0; i < intersects.length; i++ ) {
+						// intersects[ i ].object.material.color.set( 0xFFC125 );
+						console.dir(intersects [ i ].object.name )
 
+							// if (flag) {
+							// 	intersects[ i ].object.material.color.set( 0xFFC125 );
+							// 	flag = false;
+							// }else{
+							// 	intersects[ i ].object.material.color.set( 0xFFFFFF );
+							// 	flag = true;
+							// }
+							// console.dir(intersects[ i ].object.material.color);
+					}
+				controls.update();
+				renderer.render(scene, camera);
+				requestAnimationFrame(animate);
+			};
+			window.addEventListener('mousedown',function(){
+				controls.autoRotate = false;
+			},false)
+			})()
 		</script>
 	</body>
 </html>
